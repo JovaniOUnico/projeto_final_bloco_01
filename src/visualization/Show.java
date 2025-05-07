@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.List;
 
+import model.CartItem;
 import model.Product;
 
 public class Show {
@@ -25,7 +26,7 @@ public class Show {
                 System.out.println(Aux + "| " + opcao + " ".repeat(Math.max(0, espacosOpcao)) + "|");
             }
         } else {
-            String mensagem = "Nenhuma opção de menu fornecida.";
+            String mensagem = " ";
             int espacosMensagem = (LARG - mensagem.length()) / 2;
             System.out.println(Aux + "|" + " ".repeat(espacosMensagem) + mensagem + " ".repeat(espacosMensagem + (mensagem.length() % 2)) + "|");
         }
@@ -34,7 +35,7 @@ public class Show {
         System.out.println(Aux + "Entre com a opção desejada: ");
     }
     
-    public void showMenu(String title, List<String> options, String bgColor, String Color, String lastText, boolean disableCount) {
+    public void showMenu(String title, List<String> options, String bgColor, String Color, String lastText, boolean disableCount, String msgEmpty) {
         String Aux = bgColor + Color;
         
         System.out.println(Aux + "*".repeat(LARG));
@@ -58,7 +59,7 @@ public class Show {
                 System.out.println(Aux + "| " + opcao + " ".repeat(Math.max(0, espacosOpcao)) + "|");
             }
         } else {
-            String mensagem = "Nenhuma opção de menu fornecida.";
+            String mensagem = msgEmpty;
             int espacosMensagem = (LARG - mensagem.length()) / 2;
             System.out.println(Aux + "|" + " ".repeat(espacosMensagem) + mensagem + " ".repeat(espacosMensagem + (mensagem.length() % 2)) + "|");
         }
@@ -103,6 +104,25 @@ public class Show {
 			} else {
 				prodDesc += " | Texto | Preço por cm2 impresso " + nfMoeda.format(prod.getPrice());
 			}
+
+		} catch (Exception ex) {
+		    System.err.println("Erro ao acessar dados");
+		}
+		
+		return prodDesc;
+
+	}
+
+	public static String showCartLine(CartItem ct) {
+		NumberFormat nfMoeda = NumberFormat.getCurrencyInstance();
+
+		Product prod = ct.getProd();
+
+		String prodDesc = prod.getId()  + " | " + prod.getName();
+
+		try {
+
+			prodDesc += " | qtd: " + ct.getQtd() + " | Preço Total: " + nfMoeda.format(prod.getPrice() * ct.getQtd());
 
 		} catch (Exception ex) {
 		    System.err.println("Erro ao acessar dados");

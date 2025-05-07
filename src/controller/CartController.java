@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import model.CartItem;
 import model.Product;
 import repository.CartRepository;
@@ -34,7 +32,6 @@ public class CartController implements CartRepository {
 
 		for(int i = 0; i < cartProducts.size(); i++) {
 			if (cartProducts.get(i).getProd().getId().equals(id)) {
-				System.out.println(i);
 				aux = OptionalInt.of(i);
 			}
 
@@ -100,13 +97,15 @@ public class CartController implements CartRepository {
 	@Override
 	public boolean removeProductFromCart(int id) {
 		OptionalInt pos = this.getPosCartProductById(id);
-		System.out.println("bbb");
 		if(pos.isPresent()) {
-			System.out.println("aaa");
 			return cartProducts.remove(pos.getAsInt()) != null;
 		}
 
 		return false;
+	}
+
+	public void resetCartProducts() {
+		cartProducts  = new ArrayList<CartItem>();
 	}
 
 	public Integer getId() {

@@ -4,9 +4,11 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Scanner;
 
 import controller.CartController;
+import model.CartItem;
 import model.Print3D;
 import model.PrintText;
 import model.Product;
@@ -79,27 +81,68 @@ public class Menu {
 			menuProducts.add(prodDesc);
 		}
 
-        Sh.showMenu("Lista de Produtos", menuProducts, Colors.BLACK_BACKGROUND, Colors.BLUE_BRIGHT, "", true);
+        Sh.showMenu("Lista de Produtos", menuProducts, Colors.BLACK_BACKGROUND, Colors.BLUE_BRIGHT, "", true, " Produtos não cadastrados");
 
 	}
 	
 	public static void addProductToCart() {
-		Integer cod;
-		cod = getValueInt("Digite o código do produto que deseja adicionar ao carrinho: ");
 		
-		Integer qtd = getValueInt("Digite a quantidade de produtos que quer comprar: ");
+		Integer cod = getValueInt("Digite o código do produto que deseja adicionar ao carrinho: ");
+		
+		
+		if (cartControl.searchProductById(cod).isPresent()) {
+			Integer qtd = getValueInt("Digite a quantidade de produtos que quer comprar: ");
+			
+			cartControl.addProductToCart(cartControl.searchProductById(cod).get(), qtd);
+			System.out.println("Produto adicionado ao carrinho");
+		} else {
+			System.out.println("Produto não encontrado");
+		}
+
 	}
 	
 	public static void removeProductFromCart() {
-		System.out.println("Remover produto do carrinho");
+		Integer cod = getValueInt("Digite o código do produto que deseja remover do carrinho: ");
+
+		if (cartControl.searchProductById(cod).isPresent()) {
+			cartControl.removeProductFromCart(cod);
+			System.out.println("Produto removido do carrinho com sucesso");
+		} else {
+			System.out.println("Produto não encontrado");
+		}
 	}
 	
 	public static void listCart() {
-		System.out.println("Ver carrinho");
+		Show Sh = new Show();
+
+        List<String> menuProducts = new ArrayList<String>();
+
+		for (CartItem ct : cartControl.getAllCartProducts()){
+
+			String prodDesc = Show.showCartLine(ct);
+	
+			menuProducts.add(prodDesc);
+		}
+
+        Sh.showMenu("Carrinho de compra", menuProducts, Colors.BLACK_BACKGROUND, Colors.BLUE_BRIGHT, "", true, "Carrinho Vazio");
+
 	}
 	
 	public static void finishPurchase() {
-		System.out.println("Finalizar Compra");
+		NumberFormat nfMoeda = NumberFormat.getCurrencyInstance();
+		listCart();
+		
+		float sum = 0;
+		
+		for(CartItem ct : cartControl.getAllCartProducts()){
+			sum += ct.getProd().getPrice() * ct.getQtd();
+		}
+		
+		System.out.println("Valor Total: " + nfMoeda.format(sum));
+
+		payment(sum);
+		
+		
 	}
 	
 	public static void initController() {
@@ -135,6 +178,7 @@ public class Menu {
 			try {
 				value = read.nextInt();
 
+				return value;
 			} catch (Exception e) {
 			    System.err.println("Erro ao digitar o valor tente novamente!");
 
@@ -277,10 +321,86 @@ public class Menu {
 
 		System.out.println("----");
 
-
-
-
 		Show.keyPress();
+	}
+	
+	public static void payment(Float value) {
+		Random random = new Random();
+
+		//simular pagamento com cartão de crédito
+
+        // Solicitar informações do cartão
+		read.nextLine();
+
+		System.out.print("Número do Cartão (XXXX-XXXX-XXXX-XXXX): ");
+        String numeroCartao = read.nextLine();
+
+
+        System.out.print("Data de Validade (MM/AA): ");
+        String dataValidade = read.nextLine();
+
+        System.out.print("CVV: ");
+        String cvv = read.nextLine();
+      // Simular processamento
+        System.out.println("\nProcessando pagamento...");
+
+        // Simular comunicação com a instituição financeira (atraso aleatório)
+        try {
+            Thread.sleep(random.nextInt(3000) + 1000); // Espera entre 1 e 4 segundos
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Simular aprovação ou rejeição com base em uma probabilidade
+        boolean pagamentoAprovado = random.nextDouble() <= 0.8; // 80% de chance de aprovação
+
+        if (pagamentoAprovado) {
+            System.out.println("\nPagamento APROVADO!");
+            System.out.printf("Valor pago: R$ %.2f\n", value);
+            System.out.println("Obrigado pela sua compra!");
+
+            // Simular geração de número de transação
+            String numeroTransacao = String.format("%012d", random.nextInt(1000000000));
+            System.out.println("Número da Transação: " + numeroTransacao);
+            
+            cartControl.resetCartProducts();
+
+        } else {
+            System.out.println("\nPagamento REJEITADO!");
+            int codigoErro = random.nextInt(100) + 1;
+            String mensagemErro;
+
+            switch (codigoErro) {
+                case 1:
+                case 25:
+                    mensagemErro = "Saldo insuficiente.";
+                    break;
+                case 5:
+                case 33:
+                    mensagemErro = "Cartão inválido.";
+                    break;
+                case 14:
+                    mensagemErro = "Número do cartão incorreto.";
+                    break;
+                case 41:
+                case 43:
+                    mensagemErro = "Cartão bloqueado.";
+                    break;
+                case 51:
+                    mensagemErro = "Data de validade expirada.";
+                    break;
+                case 54:
+                    mensagemErro = "CVV inválido.";
+                    break;
+                default:
+                    mensagemErro = "Erro desconhecido ao processar o pagamento.";
+                    break;
+            }
+
+            System.out.println("Motivo da rejeição: " + mensagemErro);
+            System.out.println("Por favor, verifique os dados do seu cartão e tente novamente.");
+        }
+
 	}
 
 }
