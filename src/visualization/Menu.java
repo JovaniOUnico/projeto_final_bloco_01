@@ -2,10 +2,12 @@ package visualization;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 import controller.CartController;
 import model.CartItem;
@@ -13,326 +15,361 @@ import model.Print3D;
 import model.PrintText;
 import model.Product;
 
-
 public class Menu {
-	private static Scanner read;
-	private static CartController cartControl;
+    private static Scanner read;
+    private static CartController cartControl;
 
-	public static void main(String[] args) {
-		
-		cartControl = new CartController();
-		
-		initController();
+    public static void main(String[] args) {
 
-		read = new Scanner(System.in);
+        cartControl = new CartController();
 
-		Show Sh = new Show();
+        initController();
 
-		int opt = 0;
+        read = new Scanner(System.in);
+
+        Show Sh = new Show();
+
+        int opt = 0;
 
         List<String> menuPrincipal = List.of(
-            "Listar Produtos",
-            "Adicionar Produto ao Carrinho",
-            "Remover produto do carrinho",
-            "Ver Carrinho",
-            "Finalizar Compra",
-            "Sair"
+                "Listar Produtos",
+                "Filtrar Produtos por Nome", // Nova funcionalidade
+                "Ordenar Produtos por Preço", // Nova funcionalidade
+                "Adicionar Produto ao Carrinho",
+                "Remover produto do carrinho",
+                "Ver Carrinho",
+                "Finalizar Compra",
+                "Sair"
         );
 
         do {
-        	Sh.showMenu("Impress 4 You", menuPrincipal, Colors.BLACK_BACKGROUND, Colors.BLUE_BRIGHT);
+            Sh.showMenu("Impress 4 You", menuPrincipal, Colors.BLACK_BACKGROUND, Colors.BLUE_BRIGHT);
 
-        	opt = read.nextInt();
+            opt = read.nextInt();
 
-        	control(opt);
-        } while (opt != 6);
+            control(opt);
+        } while (opt != 8); // Ajustado para o novo número de opções
 
         read.close();
-	}
+    }
 
-	public static void control (int opt) {
+    public static void control(int opt) {
 
-		switch (opt) {
-			case 1 -> listProducts();
-			case 2 -> addProductToCart();
-			case 3 -> removeProductFromCart();
-			case 4 -> listCart();
-			case 5 -> finishPurchase();
-			case 6 -> Show.about();
-			default -> System.out.println("Opção inválida tente novamente");
-		}
-		
-		if (opt != 6) {			
-			Show.keyPress();
-		}
+        switch (opt) {
+            case 1 -> listProducts();
+            case 2 -> filterProductsByName(); // Nova funcionalidade
+            case 3 -> sortProductsByPrice(); // Nova funcionalidade
+            case 4 -> addProductToCart();
+            case 5 -> removeProductFromCart();
+            case 6 -> listCart();
+            case 7 -> finishPurchase();
+            case 8 -> Show.about();
+            default -> System.out.println("Opção inválida tente novamente");
+        }
 
-	}
-	
-	public static void listProducts() {
+        if (opt != 8) {
+            Show.keyPress();
+        }
 
-		Show Sh = new Show();
+    }
+
+    public static void listProducts() {
+
+        Show Sh = new Show();
 
         List<String> menuProducts = new ArrayList<String>();
 
-		for (Product prod : cartControl.getAllMarketProducts()) {
+        for (Product prod : cartControl.getAllMarketProducts()) {
 
-			String prodDesc = Show.showProductLine(prod);
-	
-			menuProducts.add(prodDesc);
-		}
+            String prodDesc = Show.showProductLine(prod);
+
+            menuProducts.add(prodDesc);
+        }
 
         Sh.showMenu("Lista de Produtos", menuProducts, Colors.BLACK_BACKGROUND, Colors.BLUE_BRIGHT, "", true, " Produtos não cadastrados");
 
-	}
-	
-	public static void addProductToCart() {
-		
-		Integer cod = getValueInt("Digite o código do produto que deseja adicionar ao carrinho: ");
-		
-		
-		if (cartControl.searchProductById(cod).isPresent()) {
-			Integer qtd = getValueInt("Digite a quantidade de produtos que quer comprar: ");
-			
-			cartControl.addProductToCart(cartControl.searchProductById(cod).get(), qtd);
-			System.out.println("Produto adicionado ao carrinho");
-		} else {
-			System.out.println("Produto não encontrado");
-		}
+    }
 
-	}
-	
-	public static void removeProductFromCart() {
-		Integer cod = getValueInt("Digite o código do produto que deseja remover do carrinho: ");
+    // Nova funcionalidade: Filtrar produtos por nome
+    public static void filterProductsByName() {
+    	read.nextLine();
+        String nameFilter = getValueString("Digite o nome (ou parte do nome) do produto para filtrar: ");
+        List<Product> filteredProducts = cartControl.searchProductsByName(nameFilter);
 
-		if (cartControl.searchProductById(cod).isPresent()) {
-			cartControl.removeProductFromCart(cod);
-			System.out.println("Produto removido do carrinho com sucesso");
-		} else {
-			System.out.println("Produto não encontrado");
-		}
-	}
-	
-	public static void listCart() {
-		Show Sh = new Show();
+        Show Sh = new Show();
+        List<String> filteredProductList = new ArrayList<>();
+
+        if (!filteredProducts.isEmpty()) {
+            for (Product prod : filteredProducts) {
+                filteredProductList.add(Show.showProductLine(prod));
+            }
+            Sh.showMenu("Produtos Filtrados por Nome", filteredProductList, Colors.BLACK_BACKGROUND, Colors.BLUE_BRIGHT, "", true, "Nenhum produto encontrado com esse nome.");
+        } else {
+            System.out.println("Nenhum produto encontrado com o nome: " + nameFilter);
+            Show.keyPress();
+        }
+    }
+
+    // Nova funcionalidade: Ordenar produtos por preço
+    public static void sortProductsByPrice() {
+        List<Product> sortedProducts = cartControl.getAllMarketProducts().stream()
+                .sorted(Comparator.comparing(Product::getPrice))
+                .collect(Collectors.toList());
+
+        Show Sh = new Show();
+        List<String> sortedProductList = new ArrayList<>();
+
+        for (Product prod : sortedProducts) {
+            sortedProductList.add(Show.showProductLine(prod));
+        }
+
+        Sh.showMenu("Produtos Ordenados por Preço", sortedProductList, Colors.BLACK_BACKGROUND, Colors.BLUE_BRIGHT, "", true, "Nenhum produto cadastrado.");
+    }
+
+    public static void addProductToCart() {
+
+        Integer cod = getValueInt("Digite o código do produto que deseja adicionar ao carrinho: ");
+
+        if (cartControl.searchProductById(cod).isPresent()) {
+            Integer qtd = getValueInt("Digite a quantidade de produtos que quer comprar: ");
+
+            cartControl.addProductToCart(cartControl.searchProductById(cod).get(), qtd);
+            System.out.println("Produto adicionado ao carrinho");
+        } else {
+            System.out.println("Produto não encontrado");
+        }
+
+    }
+
+    public static void removeProductFromCart() {
+        Integer cod = getValueInt("Digite o código do produto que deseja remover do carrinho: ");
+
+        if (cartControl.searchProductById(cod).isPresent()) {
+            cartControl.removeProductFromCart(cod);
+            System.out.println("Produto removido do carrinho com sucesso");
+        } else {
+            System.out.println("Produto não encontrado");
+        }
+    }
+
+    public static void listCart() {
+        Show Sh = new Show();
 
         List<String> menuProducts = new ArrayList<String>();
 
-		for (CartItem ct : cartControl.getAllCartProducts()){
+        for (CartItem ct : cartControl.getAllCartProducts()) {
 
-			String prodDesc = Show.showCartLine(ct);
-	
-			menuProducts.add(prodDesc);
-		}
+            String prodDesc = Show.showCartLine(ct);
+
+            menuProducts.add(prodDesc);
+        }
 
         Sh.showMenu("Carrinho de compra", menuProducts, Colors.BLACK_BACKGROUND, Colors.BLUE_BRIGHT, "", true, "Carrinho Vazio");
 
-	}
-	
-	public static void finishPurchase() {
-		NumberFormat nfMoeda = NumberFormat.getCurrencyInstance();
-		listCart();
-		
-		float sum = 0;
-		
-		for(CartItem ct : cartControl.getAllCartProducts()){
-			sum += ct.getProd().getPrice() * ct.getQtd();
-		}
-		
-		System.out.println("Valor Total: " + nfMoeda.format(sum));
+    }
 
-		payment(sum);
-		
-		
-	}
-	
-	public static void initController() {
-		ArrayList<Product> pList = new ArrayList<Product>();
-		
-		pList.add(new Print3D(cartControl.getId(), "Puxador de Gaveta",	"Puxador moderno para móveis",	9f, 40, 0.03f));
-		pList.add(new Print3D(cartControl.getId(), "Ornamento de Parede", "Decoração tridimensional para parede", 35f, 40, 0.03f));
-		pList.add(new Print3D(cartControl.getId(), "Conector para projetos eletrônicos", "Conector para projetos eletrônicos",	28f, 40, 0.11f));
-		pList.add(new Print3D(cartControl.getId(), "Quebra-Cabeça 3D", "Quebra-cabeça tridimensional pequeno",	28f, 130, 0.11f));
-		
-		pList.add(new PrintText(cartControl.getId(), "Adesivo de Parede - Citação Inspiradora", "Adesivo vinílico com frase motivacional", 20.00f, 30, 0.5f));
-		pList.add(new PrintText(cartControl.getId(), "Placa Decorativa - Bem-Vindo", "Placa em PVC com texto 'Bem-Vindo' para porta", 15.00f, 20, 0.3f));
-		pList.add(new PrintText(cartControl.getId(), "Banner Personalizado - Feliz Aniversário", "Banner em lona com nome e tema de aniversário", 35.00f, 60, 1.2f));
-		pList.add(new PrintText(cartControl.getId(), "Letreiro em MDF - Café", "Letras em MDF com a palavra 'Café' para decoração", 25.00f, 45, 0.8f));
-		pList.add(new PrintText(cartControl.getId(), "Adesivo para Notebook - Logo da Empresa", "Adesivo vinílico recortado com o logo da empresa", 10.00f, 15, 0.15f));
+    public static void finishPurchase() {
+        NumberFormat nfMoeda = NumberFormat.getCurrencyInstance();
+        listCart();
 
-		for (Product pd : pList) {			
-			cartControl.addProductToMarket(pd);
-		}
-		
-		//tests();
+        float sum = 0;
 
-	}
+        for (CartItem ct : cartControl.getAllCartProducts()) {
+            sum += ct.getProd().getPrice() * ct.getQtd();
+        }
 
-	
-	public static Integer getValueInt(String msg) {
-    	boolean validator = true;
-    	int value = 0;
+        System.out.println("Valor Total: " + nfMoeda.format(sum));
 
-    	while (validator) {
-        	System.out.println(msg);
+        payment(sum);
+    }
 
-			try {
-				value = read.nextInt();
+    public static void initController() {
+        ArrayList<Product> pList = new ArrayList<Product>();
 
-				return value;
-			} catch (Exception e) {
-			    System.err.println("Erro ao digitar o valor tente novamente!");
+        pList.add(new Print3D(cartControl.getId(), "Puxador de Gaveta", "Puxador moderno para móveis", 9f, 40, 0.03f));
+        pList.add(new Print3D(cartControl.getId(), "Ornamento de Parede", "Decoração tridimensional para parede", 35f, 40, 0.03f));
+        pList.add(new Print3D(cartControl.getId(), "Conector para projetos eletrônicos", "Conector para projetos eletrônicos", 28f, 40, 0.11f));
+        pList.add(new Print3D(cartControl.getId(), "Quebra-Cabeça 3D", "Quebra-cabeça tridimensional pequeno", 28f, 130, 0.11f));
 
-			    read.nextLine();
-				continue;
-			}
-		}
-    	
-    	return value;
-	}
-	
-	public static Integer getValueInt(String msg, int min, int max) {
-    	boolean validator = true;
-    	int value = 0;
+        pList.add(new PrintText(cartControl.getId(), "Adesivo de Parede - Citação Inspiradora", "Adesivo vinílico com frase motivacional", 20.00f, 30, 0.5f));
+        pList.add(new PrintText(cartControl.getId(), "Placa Decorativa - Bem-Vindo", "Placa em PVC com texto 'Bem-Vindo' para porta", 15.00f, 20, 0.3f));
+        pList.add(new PrintText(cartControl.getId(), "Banner Personalizado - Feliz Aniversário", "Banner em lona com nome e tema de aniversário", 35.00f, 60, 1.2f));
+        pList.add(new PrintText(cartControl.getId(), "Letreiro em MDF - Café", "Letras em MDF com a palavra 'Café' para decoração", 25.00f, 45, 0.8f));
+        pList.add(new PrintText(cartControl.getId(), "Adesivo para Notebook - Logo da Empresa", "Adesivo vinílico recortado com o logo da empresa", 10.00f, 15, 0.15f));
 
-    	while (validator) {
-        	System.out.println(msg);
+        for (Product pd : pList) {
+            cartControl.addProductToMarket(pd);
+        }
 
-			try {
-				value = read.nextInt();
+        //tests();
 
-				if (value >= min && value <= max) {					
-					validator = false;
-				} else {
-					throw new Exception("Value is invalid");
-				}
+    }
 
-			} catch (Exception e) {
-			    System.err.println("Erro ao digitar o valor tente novamente!");
+    public static Integer getValueInt(String msg) {
+        boolean validator = true;
+        int value = 0;
 
-			    read.nextLine();
-				continue;
-			}
-		}
-    	
-    	return value;
-	}
+        while (validator) {
+            System.out.println(msg);
 
-	public static float getValueFloat(String msg) {
-    	boolean validator = true;
-    	float value = 0;
+            try {
+                value = read.nextInt();
 
-    	while (validator) {
-        	System.out.println(msg);
+                return value;
+            } catch (Exception e) {
+                System.err.println("Erro ao digitar o valor tente novamente!");
 
-			try {
-				value = read.nextFloat();
+                read.nextLine();
+                continue;
+            }
+        }
 
-				validator = false;
-			} catch (Exception e) {
-			    System.err.println("Erro ao digitar o valor tente novamente!");
+        return value;
+    }
 
-			    read.nextLine();
-				continue;
-			}
-		}
-    	
-    	return value;
-	}
-	
-	public static String getValueString(String msg) {
-    	boolean validator = true;
-    	String value = "";
+    public static Integer getValueInt(String msg, int min, int max) {
+        boolean validator = true;
+        int value = 0;
 
-    	while (validator) {
-        	System.out.println(msg);
+        while (validator) {
+            System.out.println(msg);
 
-			try {
-				value = read.nextLine();
-				//read.nextLine();
+            try {
+                value = read.nextInt();
 
-				validator = false;
-			} catch (Exception e) {
-			    System.err.println("Erro ao digitar o valor tente novamente!");
+                if (value >= min && value <= max) {
+                    validator = false;
+                } else {
+                    throw new Exception("Value is invalid");
+                }
 
-			    read.nextLine();
-				continue;
-			}
-		}
-    	
-    	return value;
-	}
-	
-	public static void tests() {		
-		listProducts();
+            } catch (Exception e) {
+                System.err.println("Erro ao digitar o valor tente novamente!");
 
-		Optional<Product> prod = cartControl.searchProductById(1001);
+                read.nextLine();
+                continue;
+            }
+        }
 
-		if (prod.isPresent()) {
-			System.out.println("Produto encontrado");
-			System.out.println(Show.showProductLine(prod.get()));
-		} else {
-			System.out.println("Produto não encontrado");
-		}
-		
-		System.out.println("----");
-		
-		cartControl.searchProductsByName("Ad").forEach(prod2 -> System.out.println(Show.showProductLine(prod2)));
+        return value;
+    }
 
-		System.out.println("----");
+    public static float getValueFloat(String msg) {
+        boolean validator = true;
+        float value = 0;
 
-		System.out.println("Adicionando produto ao carrinho");
-		cartControl.addProductToCart(cartControl.searchProductById(1001).get(), 20);
+        while (validator) {
+            System.out.println(msg);
 
-		System.out.println("----");
+            try {
+                value = read.nextFloat();
 
-		System.out.println("Lista dos produtos no carrinho");
-		cartControl.getAllCartProducts().forEach(cd -> System.out.println(Show.showProductLine(cd.getProd()) + " | quantidade " + cd.getQtd()));
+                validator = false;
+            } catch (Exception e) {
+                System.err.println("Erro ao digitar o valor tente novamente!");
 
-		System.out.println("----");
-		
+                read.nextLine();
+                continue;
+            }
+        }
 
-		System.out.println("Adicionando novamente o produto ao carrinho");
-		cartControl.addProductToCart(cartControl.searchProductById(1001).get(), 10);
+        return value;
+    }
 
-		System.out.println("----");
+    public static String getValueString(String msg) {
+        boolean validator = true;
+        String value = "";
 
-		System.out.println("Lista dos produtos no carrinho");
-		cartControl.getAllCartProducts().forEach(cd -> System.out.println(Show.showProductLine(cd.getProd()) + " | quantidade " + cd.getQtd()));
+        while (validator) {
+            System.out.println(msg);
 
-		System.out.println("----");
-		
-		System.out.println("Adicionando outro produto ao carrinho");
-		cartControl.addProductToCart(cartControl.searchProductById(1005).get(), 33);
+            try {
+                value = read.nextLine();
+                //read.nextLine();
 
-		System.out.println("----");
+                validator = false;
+            } catch (Exception e) {
+                System.err.println("Erro ao digitar o valor tente novamente!");
 
-		System.out.println("Lista dos produtos no carrinho");
-		cartControl.getAllCartProducts().forEach(cd -> System.out.println(Show.showProductLine(cd.getProd()) + " | quantidade " + cd.getQtd()));
+                read.nextLine();
+                continue;
+            }
+        }
 
-		System.out.println("----");
-		
-		System.out.println("Removendo produto do carrinho");
-		cartControl.removeProductFromCart(1001);
+        return value;
+    }
 
-		System.out.println("----");
+    public static void tests() {
+        listProducts();
 
-		System.out.println("Lista dos produtos no carrinho");
-		cartControl.getAllCartProducts().forEach(cd -> System.out.println(Show.showProductLine(cd.getProd()) + " | quantidade " + cd.getQtd()));
+        Optional<Product> prod = cartControl.searchProductById(1001);
 
-		System.out.println("----");
+        if (prod.isPresent()) {
+            System.out.println("Produto encontrado");
+            System.out.println(Show.showProductLine(prod.get()));
+        } else {
+            System.out.println("Produto não encontrado");
+        }
 
-		Show.keyPress();
-	}
-	
-	public static void payment(Float value) {
-		Random random = new Random();
+        System.out.println("----");
 
-		//simular pagamento com cartão de crédito
+        cartControl.searchProductsByName("Ad").forEach(prod2 -> System.out.println(Show.showProductLine(prod2)));
+
+        System.out.println("----");
+
+        System.out.println("Adicionando produto ao carrinho");
+        cartControl.addProductToCart(cartControl.searchProductById(1001).get(), 20);
+
+        System.out.println("----");
+
+        System.out.println("Lista dos produtos no carrinho");
+        cartControl.getAllCartProducts().forEach(cd -> System.out.println(Show.showProductLine(cd.getProd()) + " | quantidade " + cd.getQtd()));
+
+        System.out.println("----");
+
+
+        System.out.println("Adicionando novamente o produto ao carrinho");
+        cartControl.addProductToCart(cartControl.searchProductById(1001).get(), 10);
+
+        System.out.println("----");
+
+        System.out.println("Lista dos produtos no carrinho");
+        cartControl.getAllCartProducts().forEach(cd -> System.out.println(Show.showProductLine(cd.getProd()) + " | quantidade " + cd.getQtd()));
+
+        System.out.println("----");
+
+        System.out.println("Adicionando outro produto ao carrinho");
+        cartControl.addProductToCart(cartControl.searchProductById(1005).get(), 33);
+
+        System.out.println("----");
+
+        System.out.println("Lista dos produtos no carrinho");
+        cartControl.getAllCartProducts().forEach(cd -> System.out.println(Show.showProductLine(cd.getProd()) + " | quantidade " + cd.getQtd()));
+
+        System.out.println("----");
+
+        System.out.println("Removendo produto do carrinho");
+        cartControl.removeProductFromCart(1001);
+
+        System.out.println("----");
+
+        System.out.println("Lista dos produtos no carrinho");
+        cartControl.getAllCartProducts().forEach(cd -> System.out.println(Show.showProductLine(cd.getProd()) + " | quantidade " + cd.getQtd()));
+
+        System.out.println("----");
+
+        Show.keyPress();
+    }
+
+    public static void payment(Float value) {
+        Random random = new Random();
+
+        //simular pagamento com cartão de crédito
 
         // Solicitar informações do cartão
-		read.nextLine();
+        read.nextLine();
 
-		System.out.print("Número do Cartão (XXXX-XXXX-XXXX-XXXX): ");
+        System.out.print("Número do Cartão (XXXX-XXXX-XXXX-XXXX): ");
         String numeroCartao = read.nextLine();
 
 
@@ -341,7 +378,7 @@ public class Menu {
 
         System.out.print("CVV: ");
         String cvv = read.nextLine();
-      // Simular processamento
+        // Simular processamento
         System.out.println("\nProcessando pagamento...");
 
         // Simular comunicação com a instituição financeira (atraso aleatório)
@@ -362,7 +399,7 @@ public class Menu {
             // Simular geração de número de transação
             String numeroTransacao = String.format("%012d", random.nextInt(1000000000));
             System.out.println("Número da Transação: " + numeroTransacao);
-            
+
             cartControl.resetCartProducts();
 
         } else {
@@ -401,6 +438,40 @@ public class Menu {
             System.out.println("Por favor, verifique os dados do seu cartão e tente novamente.");
         }
 
-	}
+    }
 
+    // Nova funcionalidade: Adicionar vários itens ao carrinho de uma vez
+    public static void addMultipleProductsToCart() {
+        System.out.println("--- Adicionar Múltiplos Produtos ao Carrinho ---");
+        boolean adding = true;
+        while (adding) {
+            Integer cod = getValueInt("Digite o código do produto que deseja adicionar (ou 0 para finalizar): ");
+            if (cod == 0) {
+                adding = false;
+            } else {
+                if (cartControl.searchProductById(cod).isPresent()) {
+                    Integer qtd = getValueInt("Digite a quantidade de produtos que quer comprar: ");
+                    cartControl.addProductToCart(cartControl.searchProductById(cod).get(), qtd);
+                    System.out.println("Produto adicionado ao carrinho.");
+                } else {
+                    System.out.println("Produto não encontrado.");
+                }
+            }
+        }
+        System.out.println("Finalizada a adição de produtos ao carrinho.");
+        Show.keyPress();
+    }
+
+    // Nova funcionalidade: Limpar o carrinho
+    public static void clearCart() {
+        System.out.print("Tem certeza que deseja limpar o carrinho? (s/n): ");
+        String confirmation = read.nextLine().toLowerCase();
+        if (confirmation.equals("s")) {
+            cartControl.resetCartProducts();
+            System.out.println("Carrinho limpo com sucesso.");
+        } else {
+            System.out.println("Operação de limpar carrinho cancelada.");
+        }
+        Show.keyPress();
+    }
 }
