@@ -120,7 +120,7 @@ public class Menu {
 			cartControl.addProductToMarket(pd);
 		}
 		
-		tests();
+		//tests();
 
 	}
 
