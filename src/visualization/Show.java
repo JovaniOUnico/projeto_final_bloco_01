@@ -1,10 +1,13 @@
 package visualization;
 
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.List;
 
+import model.Product;
+
 public class Show {
-	private static final int LARG = 60;
+	private static final int LARG = 120;
     public void showMenu(String title, List<String> options, String bgColor, String Color) {
         String Aux = bgColor + Color;
         
@@ -31,6 +34,39 @@ public class Show {
         System.out.println(Aux + "Entre com a opção desejada: ");
     }
     
+    public void showMenu(String title, List<String> options, String bgColor, String Color, String lastText, boolean disableCount) {
+        String Aux = bgColor + Color;
+        
+        System.out.println(Aux + "*".repeat(LARG));
+
+        int espacosTitulo = (LARG - title.length()) / 2;
+        System.out.println(Aux + " ".repeat(espacosTitulo) + title + " ".repeat(espacosTitulo + (title.length() % 2)));
+
+        System.out.println(Aux + "*".repeat(LARG));
+
+        if (options != null && !options.isEmpty()) {
+            for (int i = 0; i < options.size(); i++) {
+            	
+            	String opcao;
+            	if (disableCount) {
+            		opcao = options.get(i);
+            	} else {
+            		opcao = (i + 1) + " - " + options.get(i);            		
+            	}
+
+                int espacosOpcao = LARG - opcao.length() - 3;// - 3 para as bordas
+                System.out.println(Aux + "| " + opcao + " ".repeat(Math.max(0, espacosOpcao)) + "|");
+            }
+        } else {
+            String mensagem = "Nenhuma opção de menu fornecida.";
+            int espacosMensagem = (LARG - mensagem.length()) / 2;
+            System.out.println(Aux + "|" + " ".repeat(espacosMensagem) + mensagem + " ".repeat(espacosMensagem + (mensagem.length() % 2)) + "|");
+        }
+
+        System.out.println(Aux + "*".repeat(LARG));
+        System.out.println(Aux + lastText);
+    }
+    
 	public static void about() {
 		System.out.println("\n*********************************************************");
 		System.out.println("Projeto Desenvolvido por: ");
@@ -51,5 +87,28 @@ public class Show {
 			System.out.println("Você pressionou uma tecla diferente de enter!");
 
 		}
+	}
+	
+	public static String showProductLine(Product prod) {
+		NumberFormat nfMoeda = NumberFormat.getCurrencyInstance();
+
+		String type = prod.getClass().getName();
+
+		String prodDesc = prod.getId()  + " | " + prod.getName();
+
+		try {
+
+			if (type.equalsIgnoreCase("model.Print3D") == true) {
+				prodDesc += " | 3D | Preço por grama impressa: " + nfMoeda.format(prod.getPrice());
+			} else {
+				prodDesc += " | Texto | Preço por cm2 impresso " + nfMoeda.format(prod.getPrice());
+			}
+
+		} catch (Exception ex) {
+		    System.err.println("Erro ao acessar dados");
+		}
+		
+		return prodDesc;
+
 	}
 }
