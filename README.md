@@ -1,7 +1,5 @@
 # 🛍️ Impress 4 You - E-commerce de Impressão 3D e Texto (Console)
 
-![Impress 4 You Logo](link_para_sua_logo_se_houver)
-
 ## ✨ Sobre o Projeto
 
 **Impress 4 You** é uma simulação de e-commerce para console desenvolvida em Java, focada na venda de produtos impressos em 3D e itens de texto personalizados. Este projeto oferece uma experiência interativa para o usuário explorar produtos, adicionar itens ao carrinho, visualizar o carrinho e simular o processo de finalização da compra, incluindo uma simulação de pagamento com cartão de crédito.
